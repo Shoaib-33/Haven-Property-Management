@@ -1,0 +1,63 @@
+/* Signature pad (draw / type / upload) and the contract form */
+@font-face{font-family:"Dancing Script";src:url(/static/fonts/DancingScript.ttf) format("truetype");font-display:swap}
+@font-face{font-family:"Caveat";src:url(/static/fonts/Caveat.ttf) format("truetype");font-display:swap}
+@font-face{font-family:"Great Vibes";src:url(/static/fonts/GreatVibes.ttf) format("truetype");font-display:swap}
+.sig{border:1px solid var(--line,#d6e2dc);border-radius:14px;background:var(--panel,#fff);overflow:hidden}
+.sig .hidden{display:none!important}
+.sig-tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--soft,#f1f6f3);border-bottom:1px solid var(--line,#d6e2dc)}
+.sig-tabs button{padding:11px 8px;border:0;background:transparent;font-weight:700;color:var(--muted,#687b74);cursor:pointer;border-bottom:3px solid transparent}
+.sig-tabs button.active{color:var(--ink,#173b32);background:var(--panel,#fff);border-bottom-color:var(--accent,#25a07d)}
+.sig-pane{padding:14px}
+.sig-board{position:relative;height:170px;border-radius:10px;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(0,0,0,.025) 31px 32px),#fcfdfc;border:1px dashed var(--line,#c9d9d1)}
+.sig-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.sig-line{position:absolute;left:28px;right:28px;bottom:38px;border-bottom:1.5px solid #9aaba4;pointer-events:none}
+.sig-x{position:absolute;left:10px;bottom:30px;color:#9aaba4;font-size:14px;pointer-events:none}
+.sig-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--muted,#687b74)}
+.sig-label{display:block;font-size:12px;font-weight:700;color:var(--muted,#687b74);margin-bottom:6px}
+.sig-name{width:100%;padding:10px 12px;border:1px solid var(--line,#c9d9d1);border-radius:10px;font:inherit}
+.sig-styles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.sig-style{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border:1.5px solid var(--line,#d6e2dc);border-radius:12px;background:#fcfdfc;cursor:pointer;min-height:92px;justify-content:center;overflow:hidden}
+.sig-style.active{border-color:var(--accent,#25a07d);box-shadow:0 0 0 3px rgba(37,160,125,.16)}
+.sig-style span{font-size:30px;line-height:1.1;color:#14213d;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sig-style small{font-size:11px;color:var(--muted,#687b74)}
+.sig-font-0{font-family:"Dancing Script","Segoe Script","Brush Script MT",cursive}
+.sig-font-1{font-family:"Caveat","Segoe Script","Ink Free",cursive;font-size:34px!important}
+.sig-font-2{font-family:"Great Vibes","Segoe Script","Brush Script MT",cursive}
+.sig-preview{display:grid;place-items:center;min-height:120px;margin-top:12px;border:1px dashed var(--line,#c9d9d1);border-radius:10px;padding:12px;text-align:center;font-size:12px;color:var(--muted,#687b74);background:#fcfdfc}
+.sig-preview img{max-width:100%;max-height:140px}
+.sig-pick{cursor:pointer}
+
+/* contract form for the tenant */
+.cf-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 16px}
+.cf-grid .wide{grid-column:1/-1}
+.cf-grid label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}
+.cf-grid input[type=text],.cf-grid input[type=date],.cf-grid input[type=number],.cf-grid select,.cf-grid textarea{width:100%}
+.cf-check{display:flex;gap:10px;align-items:flex-start}.cf-check input{margin-top:3px}.cf-check label{margin:0;font-weight:500}
+.cf-req{color:#b4443a}
+.sign-sheet{display:grid;gap:16px}
+.contract-read{max-height:260px;overflow:auto;padding:16px 18px;border:1px solid var(--line,#d6e2dc);border-radius:12px;background:#fcfdfc;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.contract-read h4{margin:14px 0 4px;font-size:14px;color:var(--accent-ink,#176b55)}
+.sign-step{display:flex;align-items:center;gap:10px;font-weight:700;margin:6px 0 -4px}
+.sign-step span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent,#25a07d);color:#fff;font-size:12px}
+.sign-agree{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--soft,#f1f6f3)}
+.sign-agree input{margin-top:3px}
+/* landlord: send dialog */
+.lf-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}
+.lf-field{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line,#d6e2dc);border-radius:10px}
+.lf-field label{flex:1;margin:0;font-weight:500}.lf-field select{width:auto;font-size:12px}
+.lf-edit{width:100%;min-height:340px;font:13px/1.55 ui-monospace,Consolas,monospace;padding:14px;border:1px solid var(--line,#c9d9d1);border-radius:12px;white-space:pre-wrap}
+.lf-answers{display:grid;gap:6px;margin:10px 0}.lf-answers div{display:flex;gap:10px;padding:7px 10px;border-radius:8px;background:var(--soft,#f1f6f3)}.lf-answers span{flex:0 0 190px;color:var(--muted,#687b74)}
+.lf-sigimg{max-width:260px;max-height:110px;padding:6px 10px;border:1px solid var(--line,#d6e2dc);border-radius:10px;background:#fff}
+@media (max-width:640px){.cf-grid,.lf-fields{grid-template-columns:1fr}.sig-styles{grid-template-columns:1fr}}
+#modal.sign-modal{width:min(840px,calc(100vw - 24px));max-width:none}#modal.sign-modal .modal-body{max-height:calc(100vh - 130px);overflow:auto}
+
+.cf-grid .cf-check{display:flex;flex-direction:row;align-items:flex-start;gap:10px}.cf-grid .cf-check input[type=checkbox],.sign-agree input[type=checkbox]{width:18px;height:18px;flex:none;margin:2px 0 0}.sign-step{margin-top:8px}
+.cf-grid .cf-check label{margin:0;line-height:1.4}
+
+.lf-ok{display:flex;align-items:center;gap:8px;margin:6px 0;padding:9px 12px;border-radius:10px;background:#e8f5ee;color:#17594a;font-size:13px}.lf-ok svg{width:16px;height:16px;flex:none}
+.lf-current{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line,#d6e2dc);border-radius:14px;margin-bottom:16px}
+.lf-current span{color:var(--muted,#687b74)}.lf-current .button{margin-left:auto}
+.lf-sigform{margin-top:6px}.lf-sigform h3{margin:0 0 10px}
+
+.lf-fillbox{margin:6px 0 16px;padding:16px 18px;border:1px solid #cfe3da;border-radius:14px;background:#f3faf6}.lf-fillbox h3{margin:0 0 4px;font-size:15px}.lf-fillbox p{margin:0 0 12px;color:var(--muted,#687b74);font-size:13px}
+.lf-fillbox .field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.lf-fillbox input,.lf-fillbox textarea{width:100%}

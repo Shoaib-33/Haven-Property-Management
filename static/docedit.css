@@ -1,0 +1,45 @@
+/* The contract as an editable document */
+.de-wrap{background:#e9efec;padding:22px 18px 8px;max-height:calc(100vh - 220px);overflow:auto}
+.de-sheet{max-width:760px;margin:0 auto;background:#fff;padding:34px 46px 40px;box-shadow:0 2px 18px rgba(23,59,50,.16);border-radius:4px;color:#19372d;font-size:14px;line-height:1.55}
+.de-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.de-logo img{max-width:190px;max-height:62px;display:block}.de-logo strong{font-size:20px;color:#176b55}
+.de-company{text-align:right;font-size:12px;color:#687b74}
+.de-rule{height:3px;background:#176b55;margin:12px 0 22px}
+.de-block{position:relative;padding:3px 62px 3px 0;border-radius:6px}
+.de-block:hover{background:#f4f9f6}
+.de-title h1{margin:0;font-size:28px;line-height:1.15}.de-sub{margin:2px 0 16px;color:#687b74;font-style:italic;font-size:15px}
+.de-h2{margin-top:12px}.de-h2 h2,.de-appendix h2,.de-signs h2{margin:0;font-size:15px;color:#176b55}.de-h2en{margin:0 0 4px;font-size:12px;color:#687b74;font-style:italic}
+.de-p p{margin:0 0 3px}.de-en p{margin:0 0 8px;font-size:12.5px;color:#687b74;font-style:italic}
+.de-pen,.de-del{position:absolute;top:2px;width:24px;height:24px;border-radius:50%;border:1px solid #d6e2dc;background:#fff;color:#687b74;cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:.35;transition:opacity .12s,background .12s,color .12s}
+.de-pen{right:30px}.de-del{right:2px;font-size:16px}
+.de-block:hover .de-pen,.de-block:hover .de-del,.de-kv tr:hover .de-pen,.de-pen:focus-visible,.de-del:focus-visible{opacity:1}
+.de-pen:hover{background:#25a07d;color:#fff;border-color:transparent}.de-del:hover{background:#c8574d;color:#fff;border-color:transparent}
+.de-kv{width:100%;min-width:0;border-collapse:collapse;margin:6px 0 10px;border:1px solid #dce7e1}
+.de-kv th{width:34%;text-align:left;background:#f1f6f3;color:#687b74;font-size:12px;padding:7px 10px;border-bottom:1px solid #dce7e1;vertical-align:top}
+.de-kv td{position:relative;padding:7px 38px 7px 10px;border-bottom:1px solid #dce7e1}.de-kv td .de-pen{right:8px}
+.de-edit{width:100%;font:inherit;padding:8px 10px;border:1.5px solid #25a07d;border-radius:8px;box-shadow:0 0 0 3px rgba(37,160,125,.15);resize:vertical}
+.de-hint{display:block;font-size:11px;color:#687b74;margin-top:3px}
+.de-gap{font:inherit;padding:1px 6px;border:1.5px dashed #d99a1a;border-radius:6px;background:#fff7e0;min-width:110px}.de-gap.filled{border-style:solid;border-color:#25a07d;background:#effaf4}
+.de-add{display:block;margin:2px 0 8px;padding:3px 10px;border:1px dashed #b9cdc3;border-radius:8px;background:transparent;color:#687b74;font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s}
+.de-sheet:hover .de-add,.de-add:focus-visible{opacity:.85}
+.de-appendix{margin-top:18px}.de-appendix ul{margin:6px 0 0;padding-left:18px;font-size:13px}.de-blank{display:inline-block;width:150px;border-bottom:1px solid #9aaba4;margin-left:10px}
+.de-signs{margin-top:22px}.de-sigrow{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:8px;font-size:12px;color:#687b74}
+.de-sigrow img{display:block;max-width:190px;max-height:70px}.de-sigspace{display:block;height:60px}.de-sigrow hr{border:0;border-top:1px solid #9aaba4;margin:4px 0 6px}
+.de-bar{display:flex;align-items:center;gap:12px;padding:14px 22px;border-top:1px solid #dce7e1;background:#fff;flex-wrap:wrap}.de-bar .de-status{margin-right:auto;font-size:13px;color:#687b74}.de-bar .de-status.warn{color:#b45309}
+@media (max-width:640px){.de-sheet{padding:20px 16px}.de-block{padding-right:56px}.de-head{flex-direction:column}.de-company{text-align:left}.de-sigrow{grid-template-columns:1fr}}
+
+.de-note{padding:12px 22px;background:#eef6f2;border-bottom:1px solid #dce7e1;font-size:13px;color:#3d5a50}
+#modal.doc-modal .de-bar .form-error{flex-basis:100%;order:-1;margin:0}
+#modal.doc-modal .de-wrap{max-height:none;overflow:visible}
+#modal.doc-modal .de-bar{position:sticky;bottom:0;z-index:5;box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+#modal.doc-modal .de-note{position:sticky;top:0;z-index:5}
+/* the dialog is a column: header on top, the document scrolls, the action bar stays at the bottom */
+#modal.doc-modal{max-height:calc(100vh - 32px);overflow:hidden}
+#modal.doc-modal[open]{display:flex;flex-direction:column}
+#modal.doc-modal .modal-header{flex:none}
+#modal.doc-modal .modal-body{max-height:none;flex:1 1 auto;min-height:0;overflow:auto}
+/* the key-facts table must stay inside the page: wrap long values instead of widening */
+.de-kv{table-layout:fixed;width:100%;max-width:100%}
+.de-kv th,.de-kv td{white-space:normal;overflow-wrap:anywhere;word-break:normal}
+.de-kv th{width:36%}
+@media (max-width:640px){.de-kv th{width:42%}}

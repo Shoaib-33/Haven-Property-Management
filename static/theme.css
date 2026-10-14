@@ -1,0 +1,132 @@
+/* Haven theme: readability first. Loaded last.
+   Higher text contrast, larger small text, a deep-green sidebar, and distinct colours for success, warning, danger and information. */
+:root{
+  --ink:#10281f;--ink-2:#2c453a;--muted:#546a60;--line:#d8e3dd;--bg:#f2f6f4;
+  --brand:#136b52;--brand-2:#1f8a6d;--brand-ink:#0b4a39;
+  --side:#0d352a;--side-2:#124536;--side-ink:#d9ece3;--side-dim:#8fb5a4;--accent:#62d6a8;
+  --ok:#157a4f;--ok-bg:#e1f4e9;--warn:#935a0b;--warn-bg:#fdf0d5;--bad:#b0372b;--bad-bg:#fbe5e1;--info:#235f93;--info-bg:#e0eefb;--violet:#5b45a8;--violet-bg:#ece7fa;
+}
+body{color:var(--ink);background:radial-gradient(1100px 480px at 90% -8%,#dcefe6 0,transparent 60%),var(--bg);background-attachment:fixed;font-size:15px;letter-spacing:.005em}
+p,li,td,label{color:var(--ink-2)}
+.subtitle,.muted,.result-count,.panel-header p,.stat-foot,.dash-foot,.stat-top,small{color:var(--muted)}
+
+/* headings */
+h1{color:var(--ink);font-weight:700;letter-spacing:-.9px}
+h2{font-size:17px;font-weight:700;color:var(--ink)}
+h3{font-weight:700}
+.eyebrow{color:var(--brand);font-weight:800;letter-spacing:1.6px;font-size:11.5px}
+.page-heading .subtitle,.subtitle{font-size:14.5px;color:var(--muted)}
+
+/* ---------- sidebar: deep green with clear hierarchy ---------- */
+.sidebar{background:linear-gradient(180deg,var(--side-2),var(--side));border-right:0;box-shadow:6px 0 28px rgba(8,38,29,.18)}
+.sidebar .brand{color:#fff}.sidebar .brand small{color:var(--side-dim)}
+.sidebar .brand-mark{background:linear-gradient(135deg,#2fb68a,#17896a);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.workspace-picker label{color:var(--side-dim);font-weight:700;letter-spacing:1.2px}
+.workspace-picker select{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);font-weight:700;font-size:14px}
+.workspace-picker select option{color:#10281f;background:#fff}
+.nav-label{color:var(--side-dim);font-size:11px;font-weight:800;letter-spacing:1.6px;margin:20px 14px 8px}
+.nav-item{color:var(--side-ink);font-size:14px;font-weight:600;border-radius:11px}
+.nav-item .icon{opacity:.85}
+.nav-item:hover{background:rgba(255,255,255,.09);color:#fff;transform:none}
+.nav-item.active{background:rgba(98,214,168,.16);color:#fff;font-weight:700;box-shadow:inset 3px 0 var(--accent)}
+.nav-item.active .icon{color:var(--accent);opacity:1}
+.nav-item .count{background:var(--accent);color:#06281d;box-shadow:none;font-weight:800}
+.sidebar-footer{border-top:1px solid rgba(255,255,255,.1)}
+.sidebar .user-text{color:#fff;font-weight:700}.sidebar .user-text small{color:var(--side-dim)}
+.sidebar .avatar{background:rgba(255,255,255,.14);color:#fff}
+.sidebar .icon-button{color:var(--side-ink)}.sidebar .icon-button:hover{background:rgba(255,255,255,.12);color:#fff}
+.sidebar nav{scrollbar-color:rgba(255,255,255,.25) transparent}
+/* tenant portal sidebar */
+.portal-identity{color:var(--side-ink)}.portal-identity strong{color:#fff;font-size:14px}.portal-identity small{color:var(--side-dim)}
+.portal-identity .avatar{background:rgba(255,255,255,.14);color:#fff}
+.portal-shell .sidebar-footer .button{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18)}
+.portal-shell .sidebar-footer .button:hover:not(:disabled){background:rgba(255,255,255,.16);box-shadow:none}
+
+/* ---------- top bar ---------- */
+.topbar{background:rgba(255,255,255,.92)}
+.breadcrumb{color:var(--muted);font-size:14px}.breadcrumb span{color:var(--ink);font-weight:700}
+.date-pill{color:var(--ink-2);font-weight:600}
+.rail-toggle{color:var(--ink-2)}
+
+/* ---------- cards and stat tiles with their own colour ---------- */
+.panel,.stat,.rp-card,.th-quick{border-color:var(--line)}
+.panel-header h2{font-size:17px}
+.stat-top{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.stat-value{font-size:30px;font-weight:800;letter-spacing:-1px}
+.stat-foot{font-size:13px}
+.summary-grid .stat:nth-child(1) .stat-symbol{background:var(--info-bg);color:var(--info)}
+.summary-grid .stat:nth-child(2) .stat-symbol{background:var(--ok-bg);color:var(--ok)}
+.summary-grid .stat:nth-child(3) .stat-symbol{background:var(--warn-bg);color:var(--warn)}
+.summary-grid .stat:nth-child(4) .stat-symbol{background:var(--violet-bg);color:var(--violet)}
+.summary-grid .stat:nth-child(1){border-top:3px solid #5a9bd4}.summary-grid .stat:nth-child(2){border-top:3px solid #3aa883}
+.summary-grid .stat:nth-child(3){border-top:3px solid #e0b85a}.summary-grid .stat:nth-child(4){border-top:3px solid #8e7bd0}
+.stat-value{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink)}
+.stat-foot .green{color:var(--ok);font-weight:700}
+
+/* ---------- tables: bigger, darker, easier to scan ---------- */
+th{font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--ink-2);background:#eaf2ee;padding:13px 20px;border-top:0;border-bottom:1px solid var(--line)}
+td{font-size:14px;color:var(--ink-2);padding:16px 20px;border-bottom:1px solid #e6eee9}
+td strong{color:var(--ink);font-size:14.5px;font-weight:700}
+td small{font-size:12.5px;color:var(--muted)}
+tbody tr:hover td{background:#f1f8f4}
+.amount{color:var(--ink);font-weight:700}
+.tenant-cell .avatar{background:var(--ok-bg);color:var(--ok);font-weight:800}
+
+/* ---------- badges: clear colour meaning ---------- */
+.badge,.tag{font-size:12px;font-weight:700;padding:5px 11px}
+.badge.green,.tag.green{background:var(--ok-bg);color:var(--ok)}
+.badge.amber,.tag.amber{background:var(--warn-bg);color:var(--warn)}
+.badge.red,.tag.red{background:var(--bad-bg);color:var(--bad)}
+.badge.blue,.tag.blue{background:var(--info-bg);color:var(--info)}
+.badge.gray,.tag.gray,.badge,.tag{background-color:#e9efec;color:#46594f}
+.badge.green,.tag.green{background-color:var(--ok-bg)}.badge.amber,.tag.amber{background-color:var(--warn-bg)}.badge.red,.tag.red{background-color:var(--bad-bg)}.badge.blue,.tag.blue{background-color:var(--info-bg)}
+.badge.green,.tag.green{color:var(--ok)}.badge.amber,.tag.amber{color:var(--warn)}.badge.red,.tag.red{color:var(--bad)}.badge.blue,.tag.blue{color:var(--info)}
+
+/* ---------- buttons and forms ---------- */
+.button{font-size:13.5px;font-weight:700;color:var(--ink);border-color:#c5d5cc}
+.button:hover:not(:disabled){background:#eef6f2;border-color:#9dbfae}
+.button.small{font-size:12.5px}
+.button.danger{color:var(--bad);background:var(--bad-bg);border-color:#efc4bd}
+.button.link{color:var(--brand);font-weight:700}
+.field label{font-size:13px;font-weight:700;color:var(--ink-2)}
+.field input,.field select,.field textarea{font-size:14px;border-color:#c5d5cc;color:var(--ink)}
+.field small{font-size:12.5px}
+.filter-button{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.filter-button.active{background:var(--ok-bg);color:var(--brand-ink);border-color:#bfe0cf;font-weight:800}
+.tabs button{font-size:14px;font-weight:600;color:var(--ink-2)}.tabs button.active{color:var(--brand);font-weight:800}
+
+/* ---------- notices ---------- */
+.notice{font-size:14px;color:var(--ink-2);background:var(--info-bg);border-color:#c6dcf0}
+.notice .icon{color:var(--info)}
+.notice.warning{background:var(--warn-bg);border-color:#f0d9a1;color:#5e3b05}
+.attention-copy strong{font-size:14px;color:var(--ink)}.attention-copy p{font-size:13px;color:var(--muted)}
+
+/* insights, period bar, analysis */
+.insight strong{font-size:14.5px;color:var(--ink)}.insight small{font-size:13px;color:var(--ink-2)}
+.pb-label{color:var(--brand-ink)}.pb-note{font-size:13px;color:var(--muted)}
+.mt-kpi small{font-size:13px;color:var(--ink-2)}.mt-kpi>span:last-child{font-size:13px;color:var(--muted)}
+.mt-table td.warn{color:var(--warn)}
+.mt-delta.good{background:var(--ok-bg);color:var(--ok)}.mt-delta.bad{background:var(--bad-bg);color:var(--bad)}.mt-delta.up{background:var(--info-bg);color:var(--info)}
+.axis{fill:#46594f;font-size:12px}
+
+/* tenant */
+.th-quick strong{font-size:15px}.th-quick small{font-size:13px;color:var(--muted)}
+.rp-card header small,.rp-steps li{color:var(--muted)}.rp-desc{color:var(--ink-2)}.rp-next{font-size:14px;color:var(--ink)}
+.vs-btn{font-size:14px;color:var(--ink-2)}.vs-btn.active{color:var(--brand-ink)}
+
+/* chat */
+.hh-row.bot .hh-bubble{color:var(--ink)}.hh-chip{color:var(--ink-2);font-size:13px}
+
+/* rail mode keeps working with the dark sidebar */
+@media(min-width:901px){html.rail .nav-item.active{box-shadow:inset 3px 0 var(--accent)}}
+
+/* fixes found while reviewing the theme */
+.th-hero p,.th-hero .th-kicker,.th-hero .th-amount{color:#fff}.th-hero p{opacity:.92}
+.ib-filters{flex-wrap:wrap;overflow:visible;gap:5px}.ib-filter{padding:5px 9px;font-size:12.5px}
+.ib-types{flex-wrap:wrap;overflow:visible}
+.insight-cta{font-size:13px;font-weight:800}
+.panel-header p{font-size:13.5px}
+.timeline-entry p,.repair-card p{color:var(--ink-2)}
+.hh-head .hh-title small{color:rgba(255,255,255,.88)}
+.detail-item label{font-size:12.5px;font-weight:700;color:var(--muted)}.detail-item strong{font-size:14.5px;color:var(--ink)}
+.panel>p:not(.subtitle):not(.panel-note){padding:0 23px 18px;margin:0}

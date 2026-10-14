@@ -1,0 +1,10 @@
+.portal-identity{padding:8px 23px 21px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:#435e4b}
+.portal-identity .avatar{width:34px;height:34px}
+.portal-identity strong{font-size:12px;font-weight:600}
+.portal-identity small{padding-left:43px;width:100%;font-size:10px;color:var(--muted);margin-top:-8px}
+.portal-shell .sidebar-footer{display:flex;flex-direction:column;gap:8px}
+.portal-shell .sidebar-footer .button{justify-content:flex-start;font-size:11px}
+.portal-shell .workspace-footer{padding-bottom:10px}
+.portal-shell #portal-main{min-height:calc(100vh - 130px)}
+.portal-shell .searchbox{flex:1}
+.portal-shell .stat{min-height:115px}

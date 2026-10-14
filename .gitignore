@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+data/
+data-clean/
+test-results/
+.tmp-tests/
+.pytest_cache/
+*.db
+*.zip
+Haven_Dutch_Residential_Tenancy_Agreement_Demo.pdf
+.claude/

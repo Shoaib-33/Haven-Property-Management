@@ -1,0 +1,7 @@
+/* In-portal PDF viewer */
+dialog.pdf-viewer{width:min(1040px,96vw);height:min(92vh,980px);max-width:none;padding:0;border:0;border-radius:16px;overflow:hidden}
+dialog.pdf-viewer[open]{display:flex;flex-direction:column}
+dialog.pdf-viewer::backdrop{background:rgba(16,44,32,.55)}
+.pv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line,#dce7e1);background:var(--panel,#fff)}
+.pv-title{font-size:16px}.pv-tools{display:flex;align-items:center;gap:8px}
+.pv-frame{flex:1;width:100%;border:0;background:#e9efec}
