@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 
+from .clock import local_today
 from . import db, sla
 from .db import audit, connect, now, transaction
 from .security import authorize, current_user, expiry, linked, password_hash, record, token_hash, verify_password
@@ -123,7 +124,7 @@ def tenant_data(user=Depends(current_user)):
         contracts=[dict(r) for r in conn.execute('SELECT c.*,p.name property_name,p.address,p.city,p.postcode,p.area,p.rooms,p.energy_label,co.name company_name,co.payment_instructions FROM contracts c JOIN portal_accounts a ON a.tenant_id=c.tenant_id AND a.company_id=c.company_id JOIN properties p ON p.id=c.property_id JOIN companies co ON co.id=c.company_id WHERE a.user_id=? AND a.enabled=1 ORDER BY c.start_date DESC',(user['id'],))]
         ids=[c['id'] for c in contracts]
         company_ids=sorted({a['company_id'] for a in accounts})
-        result={'accounts':accounts,'contracts':contracts,'today':date.today().isoformat()}
+        result={'accounts':accounts,'contracts':contracts,'today':local_today().isoformat()}
         from .lease_offers import tenant_offers
         result['lease_offers']=tenant_offers(conn,user['id'])
         from .schedule import payment_schedule
@@ -211,19 +212,19 @@ async def tenant_repair(contract_id:int=Form(...),title:str=Form(...),descriptio
     urgency=choice(data,'urgency',('Routine','Urgent','Emergency'))
     with connect() as conn:
         c=tenant_contract(conn,user,contract_id)
-        if c['end_date'] and c['end_date']<date.today().isoformat():
+        if c['end_date'] and c['end_date']<local_today().isoformat():
             raise HTTPException(409,'This tenancy has ended. Use Messages to contact your manager.')
     upload=await read_upload(file) if file and file.filename else None
     with transaction() as conn:
         c=tenant_contract(conn,user,contract_id)
-        stamped=sla.stamp(conn,c['company_id'],urgency,date.today().isoformat())
-        rid=insert(conn,'repairs',{'company_id':c['company_id'],'contract_id':contract_id,'title':title,'description':description,'category':category,'urgency':urgency,'reported_on':date.today().isoformat(),'written':1,'due_date':stamped['due_date'],'response_due_at':stamped['response_due_at'],'created_at':now()})
+        stamped=sla.stamp(conn,c['company_id'],urgency,local_today().isoformat())
+        rid=insert(conn,'repairs',{'company_id':c['company_id'],'contract_id':contract_id,'title':title,'description':description,'category':category,'urgency':urgency,'reported_on':local_today().isoformat(),'written':1,'due_date':stamped['due_date'],'response_due_at':stamped['response_due_at'],'created_at':now()})
         doc_id=save_document(conn,c['company_id'],contract_id,user['id'],'Repair evidence',upload) if upload else None
         if doc_id:
             share_document(conn,c['company_id'],contract_id,doc_id,user['id'])
         insert(conn,'repair_updates',{'company_id':c['company_id'],'repair_id':rid,'user_id':user['id'],'message':'Tenant reported: '+description,'document_id':doc_id,'tenant_visible':1,'created_at':now()})
-        task(conn,c['company_id'],contract_id,f'Triage tenant repair #{rid}: {title}',date.today().isoformat(),'Emergency' if urgency=='Emergency' else 'Repair')
-        task(conn,c['company_id'],contract_id,f'Review day-35 repair #{rid}',(date.today()+timedelta(days=35)).isoformat(),'Repair')
+        task(conn,c['company_id'],contract_id,f'Triage tenant repair #{rid}: {title}',local_today().isoformat(),'Emergency' if urgency=='Emergency' else 'Repair')
+        task(conn,c['company_id'],contract_id,f'Review day-35 repair #{rid}',(local_today()+timedelta(days=35)).isoformat(),'Repair')
         notify_staff(conn,c['company_id'],'New tenant repair',title,'repairs')
         audit(conn,user['id'],c['company_id'],'reported','repair',rid,{'title':title,'urgency':urgency})
     return {'id':rid}
@@ -237,7 +238,7 @@ def tenant_repair_followup(repair_id:int,data:dict,user=Depends(current_user)):
         insert(conn,'repair_updates',{'company_id':r['company_id'],'repair_id':repair_id,'user_id':user['id'],'message':message,'tenant_visible':1,'created_at':now()})
         if data.get('reopen') is True and r['status'] in ('done','closed'):
             conn.execute('UPDATE repairs SET status="reopened",completed_at=NULL WHERE id=?',(repair_id,))
-            task(conn,r['company_id'],r['contract_id'],f'Tenant reopened repair #{repair_id}',date.today().isoformat(),'Repair')
+            task(conn,r['company_id'],r['contract_id'],f'Tenant reopened repair #{repair_id}',local_today().isoformat(),'Repair')
         notify_staff(conn,r['company_id'],'Repair follow-up',message[:150],'repairs')
         audit(conn,user['id'],r['company_id'],'follow_up','repair',repair_id,{'message':message})
     return {'ok':True}
@@ -289,10 +290,10 @@ def tenant_request(data:dict,user=Depends(current_user)):
     requested=date_field(data,'requested_date') if data.get('requested_date') else None
     with transaction() as conn:
         c=tenant_contract(conn,user,integer(data,'contract_id'))
-        if kind=='Termination notice' and (not requested or requested<date.today().isoformat()):
+        if kind=='Termination notice' and (not requested or requested<local_today().isoformat()):
             raise HTTPException(422,'Choose your requested future move-out date.')
         rid=insert(conn,'requests',{'company_id':c['company_id'],'contract_id':c['id'],'kind':kind,'subject':subject,'body':body,'requested_date':requested,'created_by':user['id'],'created_at':now()})
-        task(conn,c['company_id'],c['id'],f'Review {kind.lower()} #{rid}: {subject}',(date.today()+timedelta(days=1)).isoformat(),'Tenant request')
+        task(conn,c['company_id'],c['id'],f'Review {kind.lower()} #{rid}: {subject}',(local_today()+timedelta(days=1)).isoformat(),'Tenant request')
         notify_staff(conn,c['company_id'],kind+' received',subject,'portal-inbox')
         audit(conn,user['id'],c['company_id'],'submitted','request',rid,{'kind':kind})
     return {'id':rid,'status':'open'}

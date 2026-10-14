@@ -5,6 +5,7 @@ import re
 from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from .clock import local_today
 
 
 BASE = 'https://opendata.cbs.nl/ODataApi/OData/86141ENG'
@@ -34,7 +35,7 @@ def cpi_annual_rate(period: str):
     year, month = map(int, period.split('-'))
     # CBS publishes an initial figure, then a final figure later. Keep a two-full-month
     # buffer so Haven does not use the flash estimate or the most recent provisional data.
-    today = date.today()
+    today = local_today()
     cutoff_year, cutoff_month = today.year, today.month - 2
     if cutoff_month <= 0:
         cutoff_year -= 1

@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from .clock import local_today
 from . import db, sla
 from .cbs import CBSDataError, cpi_annual_rate
 from .db import audit, connect, now, transaction
@@ -198,7 +199,7 @@ def purge_expired_sessions():
 
 
 def scheduled_invoice_period(today=None):
-    today = today or date.today()
+    today = today or local_today()
     try:
         run_day = int(os.environ.get('HAVEN_RENT_BILL_DAY', '15'))
     except ValueError:
@@ -229,7 +230,7 @@ def run_scheduled_invoices(period):
 
 def process_overdue_invoices(company_id=None):
     """Start and advance reminder tasks for unpaid invoices; legal steps remain staff controlled."""
-    today=date.today()
+    today=local_today()
     created=0
     with connect() as conn:
         companies=[company_id] if company_id else [r[0] for r in conn.execute('SELECT DISTINCT company_id FROM invoices WHERE due_date<?',(today.isoformat(),))]
@@ -359,7 +360,7 @@ def me(user=Depends(current_user)):
 def all_data(company_id: int, user=Depends(current_user)):
     with connect() as conn:
         role = authorize(conn, user, company_id)
-        result = {'role': role, 'today': date.today().isoformat()}
+        result = {'role': role, 'today': local_today().isoformat()}
         operational = ['properties', 'tenants', 'contracts', 'repairs', 'tasks', 'communications', 'inspections']
         financial = ['rent_versions', 'deposit_events', 'cost_lines', 'settlements', 'rent_proposals', 'valuations', 'rules']
         if role == 'inspector':
@@ -411,7 +412,7 @@ def archive_tenant(tenant_id: int, data: dict, user=Depends(current_user)):
     with transaction() as conn:
         authorize(conn, user, company_id, OPERATIONS)
         tenant = linked(conn, 'tenants', tenant_id, company_id)
-        active = conn.execute("SELECT 1 FROM contracts WHERE company_id=? AND tenant_id=? AND status IN ('active','notice given') AND start_date<=? AND (end_date IS NULL OR end_date>=?)", (company_id, tenant_id, date.today().isoformat(), date.today().isoformat())).fetchone()
+        active = conn.execute("SELECT 1 FROM contracts WHERE company_id=? AND tenant_id=? AND status IN ('active','notice given') AND start_date<=? AND (end_date IS NULL OR end_date>=?)", (company_id, tenant_id, local_today().isoformat(), local_today().isoformat())).fetchone()
         if active:
             raise HTTPException(409, 'This tenant has an active tenancy. Record the tenancy end date before removing the contact.')
         if tenant['archived_at']:
@@ -519,8 +520,8 @@ def create_record(kind: str, data: dict, user=Depends(current_user)):
             return {'id': record_id}
         elif kind == 'repairs':
             linked(conn, 'contracts', integer(data, 'contract_id'), company_id)
-            reported = date_field(data, 'reported_on', date.today().isoformat())
-            if reported > date.today().isoformat():
+            reported = date_field(data, 'reported_on', local_today().isoformat())
+            if reported > local_today().isoformat():
                 raise HTTPException(422, 'A report cannot be dated in the future.')
             urgency_value = choice(data, 'urgency', ('Routine','Urgent','Emergency'))
             stamped = sla.stamp(conn, company_id, urgency_value, reported)
@@ -586,7 +587,7 @@ def create_record(kind: str, data: dict, user=Depends(current_user)):
         elif kind == 'rent_proposals':
             contract = linked(conn, 'contracts', integer(data, 'contract_id'), company_id)
             effective = date_field(data, 'effective_from')
-            if effective <= date.today().isoformat() or (contract['end_date'] and effective > contract['end_date']):
+            if effective <= local_today().isoformat() or (contract['end_date'] and effective > contract['end_date']):
                 raise HTTPException(422, 'Choose a future date within the tenancy.')
             if conn.execute('SELECT id FROM invoices WHERE contract_id=? AND period>=?', (contract['id'], effective[:7])).fetchone():
                 raise HTTPException(409, 'Invoices already exist for the proposed effective period.')
@@ -1030,7 +1031,7 @@ def create_manually_signed_contract(data: dict, user=Depends(current_user)):
 def submit_proof(conn, inv, data, upload, user_id):
     amount = money(data, 'amount')
     paid_on = date_field(data, 'paid_on')
-    if paid_on > date.today().isoformat():
+    if paid_on > local_today().isoformat():
         raise HTTPException(422, 'Payment date cannot be in the future.')
     method = choice(data, 'method', ('Bank transfer', 'Mobile payment', 'Cash', 'Other'))
     reference = str(data.get('reference', '')).strip()[:150]
@@ -1159,7 +1160,7 @@ def end_contract(contract_id: int, data: dict, user=Depends(current_user)):
         invoiced = conn.execute('SELECT period FROM invoices WHERE contract_id=? ORDER BY period DESC LIMIT 1', (contract_id,)).fetchone()
         if invoiced and invoiced['period'] >= end[:7] and (end[-2:] != str(calendar.monthrange(int(end[:4]), int(end[5:7]))[1]) or invoiced['period'] > end[:7]):
             raise HTTPException(409, 'Issued invoices cover this end date. Finance must resolve the final-period adjustment outside this release before termination can be recorded.')
-        conn.execute('UPDATE contracts SET end_date=?,status=? WHERE id=?', (end, 'ended' if end <= date.today().isoformat() else 'notice given', contract_id))
+        conn.execute('UPDATE contracts SET end_date=?,status=? WHERE id=?', (end, 'ended' if end <= local_today().isoformat() else 'notice given', contract_id))
         task(conn, c['company_id'], contract_id, 'Complete move-out inspection', end, 'Inspection')
         task(conn, c['company_id'], contract_id, 'Review and return deposit', (date.fromisoformat(end)+timedelta(days=14)).isoformat(), 'Deposit', 'Finance team')
         task(conn, c['company_id'], contract_id, 'Prepare final annual service-charge statement', f'{int(end[:4])+1}-06-30', 'Service charges', 'Finance team')
@@ -1259,7 +1260,7 @@ def propose_rent_indexation(data:dict,user=Depends(current_user)):
     with transaction() as conn:
         authorize(conn,user,company_id,FINANCE)
         contract=linked(conn,'contracts',contract_id,company_id)
-        if effective<=date.today().isoformat() or (contract['end_date'] and effective>contract['end_date']):
+        if effective<=local_today().isoformat() or (contract['end_date'] and effective>contract['end_date']):
             raise HTTPException(422,'Choose a future effective date within the tenancy.')
         current=conn.execute('SELECT * FROM rent_versions WHERE contract_id=? AND effective_from<=? ORDER BY effective_from DESC LIMIT 1',(contract_id,effective)).fetchone()
         if not current:
@@ -1274,7 +1275,7 @@ def propose_rent_indexation(data:dict,user=Depends(current_user)):
         reason=f'Landlord-entered rent indexation: {pct}%'+(f' — {note}' if note else '')
         if cpi:
             reason=f'CBS CPI year-on-year for {cpi["period"]}: {pct}%'+(f' - {note}' if note else '')
-            source=f'CBS StatLine table {cpi["table"]}; CPI all items index {cpi["index"]}; annual percentage change for {cpi["period"]}. Retrieved {date.today().isoformat()}. Contract formula and statutory limits require independent review. Source: {cpi["source_url"]}'
+            source=f'CBS StatLine table {cpi["table"]}; CPI all items index {cpi["index"]}; annual percentage change for {cpi["period"]}. Retrieved {local_today().isoformat()}. Contract formula and statutory limits require independent review. Source: {cpi["source_url"]}'
         else:
             source='Manually entered percentage; calculation is a proposal and has not been checked against statutory limits.'
         proposal_id=insert(conn,'rent_proposals',{'company_id':company_id,'contract_id':contract_id,'effective_from':effective,'basic_cents':new_basic,'service_cents':current['service_cents'],'reason':reason,'source':source,'created_by':user['id'],'created_at':now()})
@@ -1309,7 +1310,7 @@ def review_rent(proposal_id: int, data: dict, user=Depends(current_user)):
         if decision == 'approved':
             if data.get('receipt_confirmed') is not True:
                 raise HTTPException(422, 'Confirm that the clause, legal limits, valuation and notice requirements were checked.')
-            if p['effective_from'] <= date.today().isoformat():
+            if p['effective_from'] <= local_today().isoformat():
                 raise HTTPException(409, 'The proposed effective date has passed. Create a new proposal.')
             if conn.execute('SELECT id FROM invoices WHERE contract_id=? AND period>=?', (p['contract_id'], p['effective_from'][:7])).fetchone():
                 raise HTTPException(409, 'Invoices have already been issued for this effective period.')
@@ -1371,7 +1372,7 @@ def create_service_charge_group(data: dict, user=Depends(current_user)):
 @app.post('/api/settlements')
 def create_settlement(data: dict, user=Depends(current_user)):
     year = integer(data, 'year')
-    if not 2000 <= year < date.today().year:
+    if not 2000 <= year < local_today().year:
         raise HTTPException(422, 'Choose a completed calendar year.')
     with transaction() as conn:
         group_id = integer(data, 'service_group_id') if data.get('service_group_id') else None
@@ -1507,14 +1508,14 @@ def retry_email_reminder(job_id: int, user=Depends(current_user)):
 @app.post('/api/arrears/cases/{case_id}/step')
 def arrears_case_step(case_id:int,data:dict,user=Depends(current_user)):
     step=choice(data,'step',('personal_contact_attempted','debt_help_info_given','written_reminder_sent','municipality_consent_offered','tenant_objected','municipality_reported','debt_help_accepted','fourteen_day_letter_sent','court_review_decision','bailiff_handover'))
-    occurred_on=date_field(data,'occurred_on',date.today().isoformat())
-    if occurred_on>date.today().isoformat():
+    occurred_on=date_field(data,'occurred_on',local_today().isoformat())
+    if occurred_on>local_today().isoformat():
         raise HTTPException(422,'An arrears step cannot be dated in the future.')
     note=str(data.get('note','')).strip()[:2000]
     received_on=None
     if step=='fourteen_day_letter_sent':
         received_on=date_field(data,'received_on')
-        if received_on>date.today().isoformat() or data.get('legal_template_confirmed') is not True:
+        if received_on>local_today().isoformat() or data.get('legal_template_confirmed') is not True:
             raise HTTPException(422,'Confirm the legally reviewed letter was sent and enter its actual receipt date.')
     if step=='municipality_reported' and (data.get('municipality_process_confirmed') is not True or data.get('municipality_consent_confirmed') is not True):
         raise HTTPException(422,'Confirm the municipality reporting arrangement and the tenant’s written permission before recording a referral.')
@@ -1525,7 +1526,7 @@ def arrears_case_step(case_id:int,data:dict,user=Depends(current_user)):
             raise HTTPException(403,'A manager must make this escalation decision.')
         if case['status'] in ('resolved','closed'):
             raise HTTPException(409,'This arrears case is no longer open.')
-        age=(date.today()-date.fromisoformat(conn.execute('SELECT due_date FROM invoices WHERE id=?',(case['invoice_id'],)).fetchone()[0])).days
+        age=(local_today()-date.fromisoformat(conn.execute('SELECT due_date FROM invoices WHERE id=?',(case['invoice_id'],)).fetchone()[0])).days
         have=lambda name: bool(conn.execute('SELECT 1 FROM arrears_events WHERE case_id=? AND step=?',(case_id,name)).fetchone())
         if step=='municipality_reported':
             required=('personal_contact_attempted','debt_help_info_given','written_reminder_sent','municipality_consent_offered')
@@ -1549,7 +1550,7 @@ def arrears_case_step(case_id:int,data:dict,user=Depends(current_user)):
             raise HTTPException(409,'The municipality referral has already been recorded; contact the municipality and data-protection lead.')
         event_id=insert(conn,'arrears_events',{'company_id':case['company_id'],'case_id':case_id,'step':step,'occurred_on':occurred_on,'received_on':received_on,'note':note,'created_by':user['id'],'created_at':now()})
         if step=='debt_help_accepted':
-            until=(date.today()+timedelta(days=30)).isoformat()
+            until=(local_today()+timedelta(days=30)).isoformat()
             conn.execute('UPDATE arrears_cases SET status="paused",paused_until=?,updated_at=? WHERE id=?',(until,now(),case_id))
             task(conn,case['company_id'],case['contract_id'],f'Resume arrears follow-up for invoice {conn.execute("SELECT number FROM invoices WHERE id=?",(case["invoice_id"],)).fetchone()[0]}',until,'Arrears','Finance team')
         if step=='fourteen_day_letter_sent':

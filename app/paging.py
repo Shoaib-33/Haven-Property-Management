@@ -9,6 +9,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from .clock import local_today
 from .db import connect
 from .security import authorize, current_user
 
@@ -49,7 +50,7 @@ def records_for(conn, invoice_ids):
 
 def apply_window(conn, company_id, result):
     """Fill result with the recent invoice window and all-time monthly totals (finance roles only)."""
-    cut = month_back(date.today(), WINDOW_MONTHS - 1)
+    cut = month_back(local_today(), WINDOW_MONTHS - 1)
     ids = [r[0] for r in conn.execute(
         f'''SELECT i.id FROM invoices i WHERE i.company_id=? AND (i.period>=? OR {BALANCE}>0
             OR i.id IN (SELECT invoice_id FROM credit_notes WHERE company_id=?)
@@ -95,7 +96,7 @@ def list_invoices(company_id: int, q: str = '', status: str = 'All', period: str
                    CASE WHEN {BALANCE}<=0 THEN 'Paid' WHEN {BALANCE}<i.total_cents THEN 'Partially paid' WHEN i.due_date<? THEN 'Overdue' ELSE 'Unpaid' END AS status
                    FROM invoices i JOIN contracts c ON c.id=i.contract_id JOIN tenants t ON t.id=c.tenant_id JOIN properties p ON p.id=c.property_id
                    WHERE {' AND '.join(where)}'''
-        today = date.today().isoformat()
+        today = local_today().isoformat()
         email = email.lower() if email.lower() in ('sent', 'queued', 'failed') else ('none' if email == 'Not emailed' else 'draft' if email == 'Drafts' else '')
         sql = f'SELECT * FROM ({base}) WHERE 1=1' + (' AND status=?' if status else '') + (' AND released_at IS NULL' if email == 'draft' else ' AND released_at IS NOT NULL AND email_status IS NULL' if email == 'none' else ' AND email_status=?' if email else '')
         args = [today, *params] + ([status] if status else []) + ([email] if email and email not in ('none', 'draft') else [])

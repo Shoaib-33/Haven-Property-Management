@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
+from .clock import local_today
 from . import db, sla
 from .db import audit, connect, now, transaction
 from .security import authorize, current_user, linked, record
@@ -105,7 +106,7 @@ def edit_property(property_id:int,data:dict,user=Depends(current_user)):
         conn.execute('UPDATE properties SET name=?,energy_label=? WHERE id=?',(name,label,property_id))
         audit(conn,user['id'],p['company_id'],'updated','property',property_id,{'old':{'name':p['name'],'energy_label':p['energy_label']},'new':{'name':name,'energy_label':label}})
         if label!=p['energy_label']:
-            task(conn,p['company_id'],None,f'Obtain updated WWS report for property #{property_id}',date.today().isoformat(),'Valuation')
+            task(conn,p['company_id'],None,f'Obtain updated WWS report for property #{property_id}',local_today().isoformat(),'Valuation')
     return {'ok':True}
 
 
@@ -250,7 +251,7 @@ def appointment(data):
         return None
     try:
         dt=datetime.fromisoformat(raw)
-        if dt.date()<date.today():
+        if dt.date()<local_today():
             raise ValueError()
         return dt.isoformat(timespec='minutes')
     except (ValueError,TypeError):
@@ -289,7 +290,7 @@ def contractor_data(user=Depends(current_user)):
         jobs=[dict(r) for r in conn.execute('SELECT w.*,r.title,r.category,r.urgency,r.description,p.address,p.city,p.postcode,t.name tenant_name,t.phone tenant_phone FROM work_orders w JOIN contractor_accounts a ON a.contractor_id=w.contractor_id AND a.company_id=w.company_id JOIN repairs r ON r.id=w.repair_id JOIN contracts ct ON ct.id=r.contract_id JOIN properties p ON p.id=ct.property_id JOIN tenants t ON t.id=ct.tenant_id WHERE a.user_id=? AND a.enabled=1 ORDER BY w.id DESC',(user['id'],))]
         for company_id in {a['company_id'] for a in accounts}:
             db.audit_view(user['id'],company_id,'contractor_portal',None)
-        return {'accounts':accounts,'jobs':jobs,'agreements':agreements,'today':date.today().isoformat()}
+        return {'accounts':accounts,'jobs':jobs,'agreements':agreements,'today':local_today().isoformat()}
 
 
 @router.post('/api/contractor/agreement')
@@ -380,7 +381,7 @@ async def contractor_complete(job_id:int,note:str=Form(...),file:UploadFile=File
         invoice_id=save_document(conn,w['company_id'],r['contract_id'],user['id'],'supplier invoice',invoice_upload) if invoice_upload else None
         conn.execute('UPDATE work_orders SET status="completed",completion_note=?,completion_document_id=?,invoice_document_id=?,completed_at=? WHERE id=?',(note,did,invoice_id,now(),job_id))
         # Contractor completion does not close the tenant's repair until staff reviews it.
-        task(conn,w['company_id'],r['contract_id'],f'Verify completed work order #{job_id}',date.today().isoformat(),'Repair')
+        task(conn,w['company_id'],r['contract_id'],f'Verify completed work order #{job_id}',local_today().isoformat(),'Repair')
         notify_staff(conn,w['company_id'],'Completed work needs review',r['title'],'contractors')
         audit(conn,user['id'],w['company_id'],'completion_submitted','work_order',job_id,{'document_id':did,'invoice_document_id':invoice_id})
     return {'ok':True}

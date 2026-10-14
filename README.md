@@ -217,6 +217,7 @@ For a demo you can show to others, deploy the included Docker setup to [Render](
 | `HAVEN_DEMO_SEED` | `1` loads the fictional sample data when the service starts |
 | `HAVEN_SECURE_COOKIES` | `1` (Render serves HTTPS) |
 | `HAVEN_DATA_DIR` | `/data` |
+| `HAVEN_TIMEZONE` | the timezone whose date Haven shows, e.g. `Europe/Amsterdam` or `Asia/Dhaka`. Servers run on UTC, so without it the date can be a day behind your own |
 | `HAVEN_DEMO_PASSWORD` | your own password for all demo logins (12+ characters). Without it the public default is used, so always set it online |
 | `HAVEN_PUBLIC_URL` | your Render address |
 | `GROQ_API_KEY` | optional, for the AI Help chat |

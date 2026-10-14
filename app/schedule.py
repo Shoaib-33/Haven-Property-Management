@@ -6,6 +6,7 @@ next  = the next month with no invoice yet; it is billed automatically, so this 
 import calendar
 import os
 from datetime import date, timedelta
+from .clock import local_today
 
 
 def month_start(base, offset):
@@ -34,7 +35,7 @@ def period_amount(conn, contract, first, last):
 
 
 def payment_schedule(conn, contract, today=None):
-    today = today or date.today()
+    today = today or local_today()
     out = {'contract_id': contract['id'], 'due': None, 'next': None}
     due = None
     open_count = open_total = 0

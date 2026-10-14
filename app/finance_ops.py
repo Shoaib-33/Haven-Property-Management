@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from .clock import local_today
 from .db import audit, now, transaction
 from .security import current_user, linked, record
 from .portal_access import notify_tenant
@@ -52,12 +53,12 @@ def propose_plan(data:dict,user=Depends(current_user)):
         first=data.get('first_due','')
         try:
             due=date.fromisoformat(first)
-            if due<=date.today(): raise ValueError()
+            if due<=local_today(): raise ValueError()
         except (ValueError,TypeError):
             raise HTTPException(422,'The first instalment needs a future due date.')
         total=money(data,'total')
         current=conn.execute('SELECT i.* FROM invoices i WHERE contract_id=?',(c['id'],)).fetchall()
-        overdue=sum(max(0,invoice_balance(conn,r['id'])) for r in current if r['due_date']<date.today().isoformat())
+        overdue=sum(max(0,invoice_balance(conn,r['id'])) for r in current if r['due_date']<local_today().isoformat())
         if total>overdue or overdue==0:
             raise HTTPException(409,'The arrangement must cover an existing overdue balance and cannot exceed it.')
         every=integer(data,'interval_days')
@@ -67,7 +68,7 @@ def propose_plan(data:dict,user=Depends(current_user)):
         if amount>total:
             amount=total
         pid=insert(conn,'payment_plans',{'company_id':c['company_id'],'contract_id':c['id'],'title':text_field(data,'title'),'total_cents':total,'instalment_cents':amount,'first_due':first,'interval_days':every,'created_by':user['id'],'created_at':now()})
-        task(conn,c['company_id'],c['id'],f'Review proposed payment plan #{pid}',date.today().isoformat(),'Payment plan','Finance team')
+        task(conn,c['company_id'],c['id'],f'Review proposed payment plan #{pid}',local_today().isoformat(),'Payment plan','Finance team')
         audit(conn,user['id'],c['company_id'],'proposed','payment_plan',pid,{'total_cents':total})
     return {'id':pid}
 
@@ -81,7 +82,7 @@ def review_plan(plan_id:int,data:dict,user=Depends(current_user)):
         if p['status']!='pending': raise HTTPException(409,'This plan was already reviewed.')
         if p['created_by']==user['id']: raise HTTPException(403,'A different person must approve the payment plan.')
         if decision=='approved':
-            outstanding=sum(max(0,invoice_balance(conn,r['id'])) for r in conn.execute('SELECT * FROM invoices WHERE contract_id=? AND due_date<?',(p['contract_id'],date.today().isoformat())))
+            outstanding=sum(max(0,invoice_balance(conn,r['id'])) for r in conn.execute('SELECT * FROM invoices WHERE contract_id=? AND due_date<?',(p['contract_id'],local_today().isoformat())))
             if p['total_cents']>outstanding: raise HTTPException(409,'The overdue balance changed. Create a revised plan.')
             remaining=p['total_cents']; due=date.fromisoformat(p['first_due'])
             while remaining:
@@ -144,7 +145,7 @@ def publish_statements(settlement_id:int,data:dict,user=Depends(current_user)):
             prop_row=conn.execute('SELECT p.name,p.address,p.city FROM contracts ct JOIN properties p ON p.id=ct.property_id WHERE ct.id=?',(line['contract_id'],)).fetchone()
             from .invoice_tools import logo_bytes
             pdf=service_charge_statement_pdf_bytes(tenant['company'],tenant['name'],tenant['address'],settlement['year'],line['days'],period_days,allocations,total,advance,balance,filename,
-                company=dict(company_row),property_label=f"{prop_row['name']}, {prop_row['address']}, {prop_row['city']}",reference=f"SA-{settlement['year']}-{settlement_id:03d}-{line['contract_id']:04d}",issued_on=date.today().isoformat(),logo=logo_bytes(settlement['company_id']))
+                company=dict(company_row),property_label=f"{prop_row['name']}, {prop_row['address']}, {prop_row['city']}",reference=f"SA-{settlement['year']}-{settlement_id:03d}-{line['contract_id']:04d}",issued_on=local_today().isoformat(),logo=logo_bytes(settlement['company_id']))
             doc_id=save_document(conn,settlement['company_id'],line['contract_id'],user['id'],'Service-charge statement',(pdf,'application/pdf','.pdf',filename))
             sid=insert(conn,'published_statements',{'company_id':settlement['company_id'],'settlement_id':settlement_id,'contract_id':line['contract_id'],'document_id':doc_id,'published_by':user['id'],'published_at':now()})
             share_document(conn,settlement['company_id'],line['contract_id'],doc_id,user['id'])

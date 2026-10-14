@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
+from .clock import local_today
 from .db import audit, now, transaction
 from .main import choice, date_field, euros, insert, integer, save_document, text_field
 from .portal_access import notify_tenant, share_document
@@ -66,10 +67,10 @@ def build_context(conn, company_id, contract_id, user):
     tenant = linked(conn, 'tenants', contract['tenant_id'], company_id)
     prop = linked(conn, 'properties', contract['property_id'], company_id)
     company = conn.execute('SELECT * FROM companies WHERE id=?', (company_id,)).fetchone()
-    rent = conn.execute('SELECT * FROM rent_versions WHERE contract_id=? AND effective_from<=? ORDER BY effective_from DESC LIMIT 1', (contract_id, date.today().isoformat())).fetchone()
+    rent = conn.execute('SELECT * FROM rent_versions WHERE contract_id=? AND effective_from<=? ORDER BY effective_from DESC LIMIT 1', (contract_id, local_today().isoformat())).fetchone()
     if not rent:
         rent = conn.execute('SELECT * FROM rent_versions WHERE contract_id=? ORDER BY effective_from LIMIT 1', (contract_id,)).fetchone()
-    ctx = {'today': date.today().isoformat(), 'company.name': company['name'], 'company.address': company['address'], 'company.kvk': company['kvk'], 'user.name': user['name'],
+    ctx = {'today': local_today().isoformat(), 'company.name': company['name'], 'company.address': company['address'], 'company.kvk': company['kvk'], 'user.name': user['name'],
            'tenant.name': tenant['name'], 'tenant.email': tenant['email'], 'tenant.phone': tenant['phone'],
            'property.name': prop['name'], 'property.address': prop['address'], 'property.city': prop['city'], 'property.postcode': prop['postcode'], 'property.area': f'{prop["area"]:g}', 'property.rooms': str(prop['rooms']), 'property.energy_label': prop['energy_label'],
            'contract.start_date': contract['start_date'], 'contract.end_date': contract['end_date'] or 'open-ended', 'contract.signed_on': contract['signed_on'], 'contract.deposit': euros(contract['deposit_cents'])}
@@ -83,7 +84,7 @@ def build_context(conn, company_id, contract_id, user):
     if owner:
         ctx['owner.name'] = owner['name']
     open_invoices = []
-    today = date.today().isoformat()
+    today = local_today().isoformat()
     for inv in conn.execute('SELECT id,due_date FROM invoices WHERE contract_id=? AND due_date<? AND released_at IS NOT NULL ORDER BY due_date', (contract_id, today)):
         balance = conn.execute('SELECT COALESCE(SUM(amount_cents),0) FROM ledger WHERE invoice_id=?', (inv['id'],)).fetchone()[0]
         if balance > 0:
@@ -267,7 +268,7 @@ def generate(template_id: int, data: dict, user=Depends(current_user)):
         if missing:
             raise HTTPException(422, 'Fill in these fields first: ' + ', '.join(missing) + '. ' + ' '.join(explain(missing)))
         pdf = pdf_bytes(t['name'], text)
-        filename = re.sub(r'[^A-Za-z0-9._-]+', '-', f'{t["name"]}-{contract_id}-{date.today().isoformat()}').strip('-') + '.pdf'
+        filename = re.sub(r'[^A-Za-z0-9._-]+', '-', f'{t["name"]}-{contract_id}-{local_today().isoformat()}').strip('-') + '.pdf'
         doc_id = None
         if save:
             doc_id = save_document(conn, t['company_id'], contract_id, user['id'], 'Lease draft' if t['kind'] == 'Lease' else 'Generated letter', (pdf, 'application/pdf', '.pdf', filename))

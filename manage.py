@@ -7,6 +7,7 @@ import os
 from datetime import date, timedelta
 
 from app import db
+from app.clock import local_today
 from app.db import audit, now, transaction
 from app.security import password_hash
 
@@ -35,7 +36,7 @@ def demo_portal_accounts(conn, company_id, manager_id):
     conn.execute('INSERT INTO contractor_accounts(user_id,contractor_id,company_id,created_at) VALUES(?,?,?,?)',(contractor_user,contractor_id,company_id,now()))
     repair=conn.execute('SELECT * FROM repairs WHERE company_id=? ORDER BY id LIMIT 1',(company_id,)).fetchone()
     if not repair:return
-    conn.execute('INSERT INTO work_orders(company_id,repair_id,contractor_id,scope,scheduled_for,created_by,created_at) VALUES(?,?,?,?,?,?,?)',(company_id,repair['id'],contractor_id,'Inspect and repair the reported issue. Confirm the appointment with the resident before attending.',(date.today()+timedelta(days=2)).isoformat()+'T10:00',manager_id,now()))
+    conn.execute('INSERT INTO work_orders(company_id,repair_id,contractor_id,scope,scheduled_for,created_by,created_at) VALUES(?,?,?,?,?,?,?)',(company_id,repair['id'],contractor_id,'Inspect and repair the reported issue. Confirm the appointment with the resident before attending.',(local_today()+timedelta(days=2)).isoformat()+'T10:00',manager_id,now()))
 
 
 def demo_owners(conn, company_id, creator_id):
@@ -53,7 +54,7 @@ def demo():
     from app.main import insert, issue_month, save_document, submit_proof, task
     from reportlab.pdfgen.canvas import Canvas
     db.init_db()
-    today = date.today()
+    today = local_today()
     start = date(today.year-1, 1, 1).isoformat()
     with transaction() as conn:
         if conn.execute('SELECT COUNT(*) FROM users').fetchone()[0]:

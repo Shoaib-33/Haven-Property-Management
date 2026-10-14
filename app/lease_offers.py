@@ -17,6 +17,7 @@ from decimal import Decimal, InvalidOperation
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
+from .clock import local_today
 from . import db
 from .db import audit, now, transaction
 from .main import date_field, euros, insert, integer, money, save_document, task, text_field
@@ -177,7 +178,7 @@ def tenant_users(conn, company_id, tenant_id):
 
 def offer_context(conn, company_id, tenant, prop, user, start, end, basic, service, deposit):
     company = conn.execute('SELECT * FROM companies WHERE id=?', (company_id,)).fetchone()
-    ctx = {'today': date.today().isoformat(), 'company.name': company['name'], 'company.address': company['address'], 'company.kvk': company['kvk'], 'user.name': user['name'],
+    ctx = {'today': local_today().isoformat(), 'company.name': company['name'], 'company.address': company['address'], 'company.kvk': company['kvk'], 'user.name': user['name'],
            'tenant.name': tenant['name'], 'tenant.email': tenant['email'], 'tenant.phone': tenant['phone'],
            'property.name': prop['name'], 'property.address': prop['address'], 'property.city': prop['city'], 'property.postcode': prop['postcode'],
            'property.area': f'{prop["area"]:g}', 'property.rooms': str(prop['rooms']), 'property.energy_label': prop['energy_label'],
@@ -332,7 +333,7 @@ def approve(offer_id: int, data: dict, user=Depends(current_user)):
         signed_for = dict(offer, landlord_signature=landlord_sig, landlord_signer_name=offer['landlord_signer_name'] or user['name'], landlord_signer_title=offer['landlord_signer_title'] or '',
                           landlord_signed_at=offer['landlord_signed_at'] or datetime.now(timezone.utc).isoformat(timespec='seconds'))
         stamp = (f'\n\n## Elektronische ondertekening | Electronic signature record\nSigned by the tenant: {offer["signer_name"]} on {offer["signed_at"][:10]} at {offer["signed_at"][11:19]} UTC (IP {offer["signed_ip"]}).\n'
-                 f'Signed for the landlord: {signed_for["landlord_signer_name"]} on {signed_for["landlord_signed_at"][:10]}. Accepted by {user["name"]} on {date.today().isoformat()}.\nDocument fingerprint (SHA-256 of the agreement text and the tenant details): {offer["signed_hash"]}')
+                 f'Signed for the landlord: {signed_for["landlord_signer_name"]} on {signed_for["landlord_signed_at"][:10]}. Accepted by {user["name"]} on {local_today().isoformat()}.\nDocument fingerprint (SHA-256 of the agreement text and the tenant details): {offer["signed_hash"]}')
         pdf = agreement_file(conn, signed_for, offer_id, stamp)
         filename = re.sub(r'[^A-Za-z0-9._-]+', '-', f'Getekende-huurovereenkomst-{tenant["name"]}-{offer["start_date"]}').strip('-') + '.pdf'
         final_id = save_document(conn, offer['company_id'], contract_id, user['id'], 'Contract', (pdf, 'application/pdf', '.pdf', filename))

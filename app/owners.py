@@ -12,6 +12,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
+from .clock import local_today
 from . import db
 from .db import audit, connect, now, transaction
 from .portal_access import notify
@@ -126,7 +127,7 @@ def add_expense(data: dict, user=Depends(current_user)):
         if doc_id:
             linked(conn, 'documents', doc_id, company_id)
         incurred = date_field(data, 'incurred_on')
-        if incurred > date.today().isoformat():
+        if incurred > local_today().isoformat():
             raise HTTPException(422, 'An expense cannot be dated in the future.')
         if conn.execute("SELECT 1 FROM owner_statements WHERE portfolio_id=? AND period=? AND status<>'draft'", (portfolio['id'], incurred[:7])).fetchone():
             raise HTTPException(409, 'A statement for that month is already published. Record the expense in a later month.')
@@ -157,7 +158,7 @@ def build_statement(conn, portfolio, period):
     total_expenses = sum(e['amount_cents'] for e in expenses)
     fee = int((Decimal(total_collected) * Decimal(str(portfolio['fee_percent'])) / Decimal(100)).quantize(Decimal(1), rounding=ROUND_HALF_UP)) if total_collected > 0 else 0
     arrears = []
-    today = date.today().isoformat()
+    today = local_today().isoformat()
     for r in conn.execute(f'SELECT i.id,i.number,i.due_date,i.total_cents,c.property_id,p.name property FROM invoices i JOIN contracts c ON c.id=i.contract_id JOIN properties p ON p.id=c.property_id WHERE c.property_id IN ({marks}) AND i.due_date<? ORDER BY i.due_date', (*ids, today)):
         open_cents = conn.execute('SELECT COALESCE(SUM(amount_cents),0) FROM ledger WHERE invoice_id=?', (r['id'],)).fetchone()[0]
         if open_cents > 0:
@@ -176,7 +177,7 @@ def generate_statement(data: dict, user=Depends(current_user)):
         first = date.fromisoformat(period + '-01')
     except ValueError:
         raise HTTPException(422, 'Period must be YYYY-MM.')
-    if first >= date.today().replace(day=1):
+    if first >= local_today().replace(day=1):
         raise HTTPException(422, 'Choose a completed month.')
     with transaction() as conn:
         authorize(conn, user, company_id, FINANCE)
@@ -227,7 +228,7 @@ def mark_paid(statement_id: int, data: dict, user=Depends(current_user)):
         s = record(conn, 'owner_statements', statement_id, user, FINANCE)
         if s['status'] != 'published':
             raise HTTPException(409, 'Publish the statement before recording the payout.')
-        if paid_on > date.today().isoformat():
+        if paid_on > local_today().isoformat():
             raise HTTPException(422, 'The payout date cannot be in the future.')
         if s['net_cents'] > 0 and data.get('confirmed') is not True:
             raise HTTPException(422, 'Confirm that you made the payout outside Haven.')
@@ -310,7 +311,7 @@ def owner_data(user=Depends(current_user)):
         marks = ','.join('?' for _ in owner_ids)
         portfolios = [dict(r) for r in conn.execute(f'SELECT id,owner_id,name,fee_percent FROM portfolios WHERE owner_id IN ({marks}) ORDER BY name', owner_ids)]
         pids = [p['id'] for p in portfolios]
-        today = date.today().isoformat()
+        today = local_today().isoformat()
         units, statements, arrears, month_collected = [], [], [], 0
         if pids:
             pm = ','.join('?' for _ in pids)

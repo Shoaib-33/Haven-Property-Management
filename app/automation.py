@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from .clock import local_today
 from .db import audit, connect, now, transaction
 from .main import choice, euros, insert, integer, task, text_field
 from .portal_access import notify_staff, notify_tenant
@@ -59,7 +60,7 @@ def candidates(conn, rule, today):
 
 
 def run_company(conn, company_id, dry_run=False):
-    today = date.today().isoformat()
+    today = local_today().isoformat()
     report = []
     for rule in [dict(r) for r in conn.execute('SELECT * FROM automation_rules WHERE company_id=? AND enabled=1 ORDER BY id', (company_id,))]:
         done = {(r['entity'], r['entity_id']) for r in conn.execute('SELECT entity,entity_id FROM automation_runs WHERE rule_id=?', (rule['id'],))}

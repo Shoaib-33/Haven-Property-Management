@@ -12,6 +12,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import HRFlowable, Image, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from .clock import local_today
 from .agreement_pdf import GREEN, INK, LINE, MUTED, PALE, NumberedCanvas
 
 METHODS = {'equal': ('Gelijk deel per woning', 'Equal share per unit'), 'floor_area': ('Aandeel naar woonoppervlak', 'Share by floor area'),
@@ -21,7 +22,7 @@ METHODS = {'equal': ('Gelijk deel per woning', 'Equal share per unit'), 'floor_a
 def statement_pdf_bytes(company_name, tenant_name, address, year, occupied_days, year_days, allocations, cost_total, advances, balance, *,
                         company=None, property_label='', reference='', issued_on=None, logo=None):
     company = company or {'name': company_name}
-    issued_on = issued_on or date.today().isoformat()
+    issued_on = issued_on or local_today().isoformat()
     esc = lambda value: escape(str(value or ''))
     money = lambda cents: f'€ {cents / 100:,.2f}'
     base = getSampleStyleSheet()
